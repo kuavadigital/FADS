@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Postcard Invitation Lightbox</title>
+  <style>
+    /* Reset and basic settings */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* Lightbox background: white with a subtle pink gradient (feel free to swap with your own dance/Valentine's pattern)
+       To use a custom pattern image, comment out the gradient line and uncomment the background-image lines below. */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #fff, #ffe6f2);
+      /* Option for a custom pattern:
+      background: #fff url('https://your-pattern-url.com/pattern.png') repeat;
+      */
+    }
+    
+    /* Card container with 3D perspective */
+    .card {
+      width: 400px;
+      height: 250px;
+      perspective: 1000px;
+    }
+    
+    /* Inner wrapper for flipping */
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 1s ease;
+      transform-style: preserve-3d;
+    }
+    
+    /* Flip the card when the .flipped class is added */
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+    
+    /* Common face styles */
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 15px;
+      backface-visibility: hidden;
+      overflow: hidden;
+    }
+    
+    /* Front face styling */
+    .card-front {
+      background: #e37373;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 24px;
+      color: white;
+      z-index: 2; /* on top when not flipped */
+    }
+    
+    /* Back face styling */
+    .card-back {
+      background: #f8a8a8;
+      transform: rotateY(180deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 20px;
+      color: #682d2d;
+      z-index: 1; /* behind when not flipped */
+    }
+    
+    /* Swap stacking order when flipped */
+    .card.flipped .card-front {
+      z-index: 1;
+    }
+    .card.flipped .card-back {
+      z-index: 2;
+    }
+    
+    /* Buttons container: a column so the No button is just below the Yes button */
+    .buttons {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    /* Button styles */
+    .buttons button {
+      padding: 8px 20px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    
+    #yesButton {
+      background: #e06666;
+      color: white;
+    }
+    
+    #yesButton:hover {
+      background: #c04040;
+    }
+    
+    #noButton {
+      background: #f56b6b;
+      color: white;
+      position: relative; /* for repositioning on hover */
+    }
+  </style>
+</head>
+<body>
+  <!-- Card container -->
+  <div class="card" id="card">
+    <div class="card-inner">
+      <!-- Front Face -->
+      <div class="card-face card-front">
+        For You
+      </div>
+      <!-- Back Face -->
+      <div class="card-face card-back">
+        <div>
+          <div>Will you be my dance partner?</div>
+          <div class="buttons">
+            <button id="yesButton">Yes!</button>
+            <button id="noButton">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Get element references
+    const card = document.getElementById('card');
+    const yesButton = document.getElementById('yesButton');
+    const noButton = document.getElementById('noButton');
+    
+    // Toggle the flip on card click, except when clicking on a button.
+    card.addEventListener('click', function(e) {
+      if (e.target.tagName.toLowerCase() === 'button') return;
+      card.classList.toggle('flipped');
+    });
+    
+    // "Yes" button: Prevent flip and redirect.
+    yesButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      window.location.href = "https://your-website.com"; // Replace with your URL.
+    });
+    
+    // "No" button: On hover, reposition randomly within the back face.
+    noButton.addEventListener('mouseover', function(e) {
+      e.stopPropagation();
+      const cardBack = document.querySelector('.card-back');
+      const rect = cardBack.getBoundingClientRect();
+      const btnRect = noButton.getBoundingClientRect();
+      
+      // Calculate maximum allowed positions for the button
+      const maxLeft = rect.width - btnRect.width;
+      const maxTop = rect.height - btnRect.height;
+      const newLeft = Math.random() * maxLeft;
+      const newTop = Math.random() * maxTop;
+      
+      noButton.style.position = 'absolute';
+      noButton.style.left = newLeft + 'px';
+      noButton.style.top = newTop + 'px';
+    })
+
+        // "No" button: Moves randomly but avoids overlapping Yes button & text
+    noButton.addEventListener('mouseover', function(e) {
+      e.stopPropagation();
+      const cardBack = document.querySelector('.card-back');
+      const rect = cardBack.getBoundingClientRect();
+      const btnRect = noButton.getBoundingClientRect();
+      const yesRect = yesButton.getBoundingClientRect();
+
+      // Define movement limits
+      const maxLeft = rect.width - btnRect.width - 20;
+      const maxTop = rect.height - btnRect.height - 20;
+
+      let newLeft, newTop;
+      let overlapDetected = true;
+
+      // Keep trying new positions until there is no overlap
+      while (overlapDetected) {
+        newLeft = Math.random() * maxLeft;
+        newTop = Math.random() * maxTop;
+
+        // Check if newTop overlaps with the Yes button
+        const noButtonBottom = newTop + btnRect.height;
+        const yesButtonTop = yesRect.top - rect.top;
+
+        if (noButtonBottom < yesButtonTop || newTop > yesButtonTop + yesRect.height) {
+          overlapDetected = false;
+        }
+      }
+
+      // Apply new position
+      noButton.style.position = 'absolute';
+      noButton.style.left = `${newLeft}px`;
+      noButton.style.top = `${newTop}px`;
+    });
+
+  </script>
+</body>
+</html>
